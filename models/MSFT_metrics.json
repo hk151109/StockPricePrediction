@@ -1,0 +1,46 @@
+{
+  "symbol": "MSFT",
+  "history": [
+    {
+      "operation": "train",
+      "samples": {
+        "train": 555,
+        "test": 139,
+        "total": 704
+      },
+      "training": {
+        "train_loss_mse": 0.0022549352142959833,
+        "train_mae": 0.024474451954172444,
+        "train_r2": 0.5845901001751588,
+        "test_loss_mse": 0.004396270494908094,
+        "test_mae": 0.029883642707597514,
+        "test_rmse": 0.0663043776451306,
+        "test_r2": 0.6322240891971338
+      },
+      "model_config": {
+        "lstm_units_1": 64,
+        "lstm_units_2": 128,
+        "dropout_rate": 0.3,
+        "learning_rate": 0.001,
+        "bidirectional": false
+      },
+      "window_size": 10,
+      "epochs_run": 32,
+      "final_train_loss": 0.004026185255497694,
+      "final_val_loss": 0.0010606569703668356,
+      "timestamp": "2025-10-30 09:38:19",
+      "date": "2025-10-30"
+    },
+    {
+      "operation": "prediction",
+      "last_actual_close": 520.02,
+      "predicted_next_price": 527.5180660611392,
+      "price_change": 7.498066061139184,
+      "price_change_percent": 1.4418803240527642,
+      "data_points_used": 704,
+      "window_size": 10,
+      "timestamp": "2025-10-30 09:38:19",
+      "date": "2025-10-30"
+    }
+  ]
+}

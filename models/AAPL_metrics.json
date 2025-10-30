@@ -1,0 +1,46 @@
+{
+  "symbol": "AAPL",
+  "history": [
+    {
+      "operation": "train",
+      "samples": {
+        "train": 555,
+        "test": 139,
+        "total": 704
+      },
+      "training": {
+        "train_loss_mse": 0.004472061991691589,
+        "train_mae": 0.030104388112356852,
+        "train_r2": 0.6865599646276876,
+        "test_loss_mse": 0.01122095063328743,
+        "test_mae": 0.06549648821297517,
+        "test_rmse": 0.1059289886352524,
+        "test_r2": 0.25567698192258215
+      },
+      "model_config": {
+        "lstm_units_1": 64,
+        "lstm_units_2": 128,
+        "dropout_rate": 0.3,
+        "learning_rate": 0.001,
+        "bidirectional": false
+      },
+      "window_size": 10,
+      "epochs_run": 45,
+      "final_train_loss": 0.0065213884226977825,
+      "final_val_loss": 0.003977665677666664,
+      "timestamp": "2025-10-30 09:38:11",
+      "date": "2025-10-30"
+    },
+    {
+      "operation": "prediction",
+      "last_actual_close": 270.83,
+      "predicted_next_price": 266.51624868822097,
+      "price_change": -4.313751311779015,
+      "price_change_percent": -1.592789318679251,
+      "data_points_used": 704,
+      "window_size": 10,
+      "timestamp": "2025-10-30 09:38:19",
+      "date": "2025-10-30"
+    }
+  ]
+}
