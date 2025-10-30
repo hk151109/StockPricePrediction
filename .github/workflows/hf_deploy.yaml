@@ -11,27 +11,11 @@ jobs:
   sync-to-hub:
     runs-on: ubuntu-latest
     steps:
-<<<<<<< Updated upstream
-
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          lfs: true   # ✅ Pull full LFS files from GitHub repo
-          fetch-depth: 0   # ✅ Fetch full history — required for HF push
-
-
-      - name: Set up Git LFS
-        run: |
-          git lfs install
-          git lfs pull     # ✅ Ensure actual binary files are downloaded
-=======
       - name: Checkout repository (with LFS)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           lfs: true
->>>>>>> Stashed changes
-
       - name: Set up Git LFS and fetch objects from origin
         run: |
           git lfs install
