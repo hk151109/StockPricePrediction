@@ -16,6 +16,7 @@ from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.optimizers import Adam
 import tensorflow as tf
+import shutil
 
 # Suppress TensorFlow warnings
 tf.get_logger().setLevel('ERROR')
@@ -250,6 +251,20 @@ def build_lstm_model(input_shape, learning_rate=0.001, bidirectional=False):
     return model
 
 
+def is_hdf5_file(path):
+    """Quick check whether a file looks like an HDF5 file by signature.
+
+    HDF5 files begin with the 8-byte signature: 0x89 0x48 0x44 0x46 0x0d 0x0a 0x1a 0x0a
+    This avoids trying to load pointer/plain-text files that cause h5py errors.
+    """
+    try:
+        with open(path, 'rb') as f:
+            sig = f.read(8)
+            return sig == b"\x89HDF\r\n\x1a\n"
+    except Exception:
+        return False
+
+
 def train_stock_model(symbol, retrain=False):
     """
     Train a new LSTM model for a stock or update existing one.
@@ -292,13 +307,47 @@ def train_stock_model(symbol, retrain=False):
 
     # Load or create model
     if retrain and os.path.exists(model_path):
-        print(f"  Loading existing model for continued training...")
-        model = load_model(model_path, compile=False)
-        model.compile(optimizer=Adam(learning_rate=config['learning_rate']), loss='mse', metrics=['mae'])
-        # Load existing scaler
-        with open(scaler_path, 'rb') as f:
-            scaler = pickle.load(f)
-    else:
+        print(f"  Attempting to load existing model for continued training...")
+
+        # Quick check to avoid trying to load non-HDF5 or pointer files
+        if not is_hdf5_file(model_path):
+            # Move corrupt/pointer file aside and fall back to training from scratch
+            corrupt_path = model_path + ".corrupt"
+            try:
+                shutil.move(model_path, corrupt_path)
+                print(f"  WARNING: Existing model file did not look like a valid HDF5 file. Moved to: {corrupt_path}")
+            except Exception as e:
+                print(f"  WARNING: Could not move invalid model file: {e}")
+            print("  Will create a new model instead of loading the invalid file.")
+            retrain = False
+
+    if retrain and os.path.exists(model_path):
+        try:
+            model = load_model(model_path, compile=False)
+            model.compile(optimizer=Adam(learning_rate=config['learning_rate']), loss='mse', metrics=['mae'])
+            # Load existing scaler if present
+            if os.path.exists(scaler_path):
+                try:
+                    with open(scaler_path, 'rb') as f:
+                        scaler = pickle.load(f)
+                except Exception as e:
+                    print(f"  WARNING: Could not load scaler: {e}")
+                    print("  Continuing with newly-fitted scaler from data.")
+            else:
+                print("  WARNING: Scaler not found for existing model; continuing with newly-fitted scaler.")
+        except Exception as e:
+            print(f"  ERROR loading existing model: {e}")
+            # Move the problematic file aside and create new model
+            corrupt_path = model_path + ".corrupt"
+            try:
+                shutil.move(model_path, corrupt_path)
+                print(f"  Moved invalid model to: {corrupt_path}")
+            except Exception as e2:
+                print(f"  WARNING: Could not move invalid model file: {e2}")
+            print("  Creating a new LSTM model instead.")
+            retrain = False
+
+    if not retrain or not os.path.exists(model_path):
         print(f"  Creating new LSTM model...")
         amount_of_features = X_train.shape[2]
         model = build_lstm_model(

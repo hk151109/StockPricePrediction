@@ -11,6 +11,7 @@ jobs:
   sync-to-hub:
     runs-on: ubuntu-latest
     steps:
+<<<<<<< Updated upstream
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -23,14 +24,49 @@ jobs:
         run: |
           git lfs install
           git lfs pull     # ✅ Ensure actual binary files are downloaded
+=======
+      - name: Checkout repository (with LFS)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+>>>>>>> Stashed changes
 
-      - name: Push to hub
+      - name: Set up Git LFS and fetch objects from origin
+        run: |
+          git lfs install
+          # Ensure we have all LFS objects for the current branch from GitHub
+          git lfs fetch --all origin
+          git lfs checkout
+
+      - name: Debug models (optional)
+        run: |
+          python - <<'PY'
+          import os
+          files = [
+            "models/AAPL_model.h5",
+            "models/MSFT_model.h5",
+            "models/AAPL_scaler.pkl",
+            "models/MSFT_scaler.pkl",
+          ]
+          for f in files:
+              if os.path.exists(f):
+                  s=os.path.getsize(f)
+                  with open(f,'rb') as fh:
+                      sig=fh.read(8)
+                  print(f"{f} size={s} sig={sig!r}")
+              else:
+                  print(f"{f} MISSING")
+          PY
+
+      - name: Push to Hugging Face Hub (LFS first, then refs)
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           git lfs install
           git config lfs.allowincompletepush true
-          git remote add hf https://hrk6378:${HF_TOKEN}@huggingface.co/spaces/hrk6378/smol-pp
-          # ✅ Explicitly push all LFS objects to HF storage
-          git lfs push hf main --all
+          git remote add hf https://hrk6378:${HF_TOKEN}@huggingface.co/spaces/hrk6378/smol-pp || true
+          # Upload all LFS objects referenced by the branch to HF
+          git lfs push --all hf main
+          # Push Git refs
           git push hf HEAD:main --force
