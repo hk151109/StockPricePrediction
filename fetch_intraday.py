@@ -9,7 +9,7 @@ from pathlib import Path
 API_KEY = "AWBE6N6H7MIU812S"
 DATA_DIR = "data"
 SYMBOLS_FILE = "symbols.json"
-INTERVAL = "30min"  # Intraday 5-minute data
+INTERVAL = "5min"  # Intraday 5-minute data
 
 # Create data directory if it doesn't exist
 os.makedirs(DATA_DIR, exist_ok=True)
