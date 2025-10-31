@@ -23,26 +23,6 @@ jobs:
           git lfs fetch --all origin
           git lfs checkout
 
-      - name: Debug models (optional)
-        run: |
-          python - <<'PY'
-          import os
-          files = [
-            "models/AAPL_model.h5",
-            "models/MSFT_model.h5",
-            "models/AAPL_scaler.pkl",
-            "models/MSFT_scaler.pkl",
-          ]
-          for f in files:
-              if os.path.exists(f):
-                  s=os.path.getsize(f)
-                  with open(f,'rb') as fh:
-                      sig=fh.read(8)
-                  print(f"{f} size={s} sig={sig!r}")
-              else:
-                  print(f"{f} MISSING")
-          PY
-
       - name: Push to Hugging Face Hub (LFS first, then refs)
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
