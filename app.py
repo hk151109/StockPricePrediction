@@ -15,20 +15,62 @@ app = Flask(__name__)
 # Get available stocks from symbols.json
 def get_available_stocks():
     """Load stock symbols from JSON file."""
-    with open("symbols.json", "r") as f:
-        config = json.load(f)
-    return config.get("stocks", [])
+    try:
+        if not os.path.exists("symbols.json"):
+            print(f"[app.py] WARNING: symbols.json not found in {os.getcwd()}")
+            # Return default stocks as fallback
+            return ["AAPL", "MSFT"]
+        with open("symbols.json", "r") as f:
+            config = json.load(f)
+        stocks = config.get("stocks", [])
+        print(f"[app.py] Loaded {len(stocks)} stocks from symbols.json: {stocks}")
+        return stocks
+    except Exception as e:
+        print(f"[app.py] ERROR reading symbols.json: {e}")
+        # Return default stocks as fallback
+        return ["AAPL", "MSFT"]
 
 def get_last_day_data(symbol):
-    """Get yesterday's data for the stock."""
+    """Get yesterday's data for the stock. Falls back to historical data if today's intraday is not available."""
     today_str = datetime.now().strftime("%Y-%m-%d")
     today_file = os.path.join("data", f"{symbol}_{today_str}.csv")
     
+    # Try today's intraday data first
     if os.path.exists(today_file):
-        df = pd.read_csv(today_file)
-        df["timestamp"] = pd.to_datetime(df["timestamp"])
-        return df.sort_values("timestamp").reset_index(drop=True)
+        try:
+            df = pd.read_csv(today_file)
+            df["timestamp"] = pd.to_datetime(df["timestamp"])
+            print(f"[app.py] Loaded today's intraday data for {symbol}: {len(df)} records")
+            return df.sort_values("timestamp").reset_index(drop=True)
+        except Exception as e:
+            print(f"[app.py] ERROR reading today's intraday file for {symbol}: {e}")
+    else:
+        print(f"[app.py] Today's intraday file not found: {today_file}")
     
+    # Fallback to historical data (last trading day in history)
+    history_file = os.path.join("data", f"{symbol}_history.csv")
+    if os.path.exists(history_file):
+        try:
+            df = pd.read_csv(history_file)
+            df["timestamp"] = pd.to_datetime(df["timestamp"])
+            # Get the last day's records from history (all records with the latest date)
+            df = df.sort_values("timestamp").reset_index(drop=True)
+            if len(df) > 0:
+                latest_date = df["timestamp"].dt.date.max()
+                df_last_day = df[df["timestamp"].dt.date == latest_date]
+                if len(df_last_day) > 0:
+                    print(f"[app.py] Using fallback: last day from history for {symbol} ({latest_date}): {len(df_last_day)} records")
+                    return df_last_day.reset_index(drop=True)
+                else:
+                    # If no day found, return last 10 records as a fallback
+                    print(f"[app.py] Using fallback: last 10 records from history for {symbol}")
+                    return df.tail(10).reset_index(drop=True)
+        except Exception as e:
+            print(f"[app.py] ERROR reading history file for {symbol}: {e}")
+    else:
+        print(f"[app.py] History file not found: {history_file}")
+    
+    print(f"[app.py] WARNING: No data available for {symbol}")
     return None
 
 def get_metrics_for_stock(symbol):
@@ -143,7 +185,8 @@ def analyze():
         # Get last day's data
         last_day = get_last_day_data(symbol)
         if last_day is None:
-            return jsonify({"error": "No data found for symbol"}), 404
+            print(f"[app.py] ERROR in /api/analyze: get_last_day_data returned None for {symbol}")
+            return jsonify({"error": f"No data found for symbol {symbol}. Check logs for details."}), 404
         
         # Create last day graph
         fig_last = go.Figure()
