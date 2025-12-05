@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-API_KEY = "AWBE6N6H7MIU812S"
+API_KEY = "I0N8RSZ7U6HYEBDB"
 DATA_DIR = "data"
 SYMBOLS_FILE = "symbols.json"
 INTERVAL = "5min"  # Intraday 5-minute data
@@ -37,7 +37,7 @@ def fetch_intraday(symbol, interval="60min"):
     url = (
         f"https://www.alphavantage.co/query?"
         f"function=TIME_SERIES_INTRADAY&symbol={symbol}"
-        f"&interval={interval}&outputsize=full&apikey={API_KEY}"
+        f"&interval={interval}&outputsize=compact&apikey={API_KEY}"
     )
     
     print(f"  Fetching from API: {symbol} (interval={interval})")
